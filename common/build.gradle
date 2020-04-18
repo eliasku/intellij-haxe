@@ -26,3 +26,7 @@ processResources {
         include '**/*.properties'
     }
 }
+
+dependencies {
+    compileOnly files("${ideaTargetDir}/plugins/java/lib/java-api.jar")
+}

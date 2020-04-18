@@ -56,10 +56,10 @@ public final class HaxeMethodHierarchyNodeDescriptor extends HaxeHierarchyNodeDe
   private HaxeMethodHierarchyTreeStructure myTreeStructure;
 
   public HaxeMethodHierarchyNodeDescriptor(final Project project,
-                                       final HierarchyNodeDescriptor parentDescriptor,
-                                       final PsiElement aClass,
-                                       final boolean isBase,
-                                       final HaxeMethodHierarchyTreeStructure treeStructure
+                                           final HierarchyNodeDescriptor parentDescriptor,
+                                           final PsiElement aClass,
+                                           final boolean isBase,
+                                           final HaxeMethodHierarchyTreeStructure treeStructure
   ) {
     super(project, parentDescriptor, aClass, isBase);
     myTreeStructure = treeStructure;
@@ -74,8 +74,8 @@ public final class HaxeMethodHierarchyNodeDescriptor extends HaxeHierarchyNodeDe
   }
 
   /**
-  * Element for OpenFileDescriptor
-  */
+   * Element for OpenFileDescriptor
+   */
   public final PsiElement getTargetElement() {
     final HaxeClass theHaxeClass = getHaxeClass();
     if ((null == theHaxeClass) || (! theHaxeClass.isValid())) return null;
@@ -116,7 +116,7 @@ public final class HaxeMethodHierarchyNodeDescriptor extends HaxeHierarchyNodeDe
       if (myIsBase) {
         final LayeredIcon icon = new LayeredIcon(2);
         icon.setIcon(newIcon, 0);
-        icon.setIcon(AllIcons.Hierarchy.Base, 1, -AllIcons.Hierarchy.Base.getIconWidth() / 2, 0);
+        icon.setIcon(AllIcons.Hierarchy.Supertypes, 1, -AllIcons.Hierarchy.Supertypes.getIconWidth() / 2, 0);
         newIcon = icon;
       }
 

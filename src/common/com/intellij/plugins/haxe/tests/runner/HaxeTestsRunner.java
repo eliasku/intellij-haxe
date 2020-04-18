@@ -41,8 +41,6 @@ import com.intellij.plugins.haxe.tests.runner.filters.ErrorFilter;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 
-;
-
 public class HaxeTestsRunner extends DefaultProgramRunner {
 
   public static final String HAXE_TESTS_RUNNER_ID = "HaxeTestsRunner";
@@ -57,45 +55,43 @@ public class HaxeTestsRunner extends DefaultProgramRunner {
   public boolean canRun(@NotNull String executorId, @NotNull RunProfile profile) {
     return DefaultRunExecutor.EXECUTOR_ID.equals(executorId) && profile instanceof HaxeTestsConfiguration;
   }
-
-  @Override
-  protected RunContentDescriptor doExecute(@NotNull final Project project,
-                                           @NotNull RunProfileState state,
-                                           final RunContentDescriptor descriptor,
-                                           @NotNull final ExecutionEnvironment environment) throws ExecutionException {
-
-    final HaxeTestsConfiguration profile = (HaxeTestsConfiguration)environment.getRunProfile();
-    final Module module = profile.getConfigurationModule().getModule();
-
-    ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-    VirtualFile[] roots = rootManager.getContentRoots();
-
-    return super.doExecute(project, new CommandLineState(environment) {
-      @NotNull
-      @Override
-      protected ProcessHandler startProcess() throws ExecutionException {
-        //actually only neko target is supported for tests
-        HaxeTarget currentTarget = HaxeTarget.NEKO;
-        final GeneralCommandLine commandLine = new GeneralCommandLine();
-        commandLine.setWorkDirectory(PathUtil.getParentPath(module.getModuleFilePath()));
-        commandLine.setExePath(currentTarget.getFlag());
-        final HaxeModuleSettings settings = HaxeModuleSettings.getInstance(module);
-        String folder = settings.getOutputFolder() != null ? (settings.getOutputFolder() + "/release/") : "";
-        commandLine.addParameter(getFileNameWithCurrentExtension(currentTarget, folder + settings.getOutputFileName()));
-
-        final TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(module.getProject());
-        consoleBuilder.addFilter(new ErrorFilter(module));
-        setConsoleBuilder(consoleBuilder);
-
-        return new OSProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString());
-      }
-
-      private String getFileNameWithCurrentExtension(HaxeTarget haxeTarget, String fileName) {
-        if (haxeTarget != null) {
-          return haxeTarget.getTargetFileNameWithExtension(FileUtil.getNameWithoutExtension(fileName));
-        }
-        return fileName;
-      }
-    }, descriptor, environment);
-  }
+  //
+  //@Override
+  //protected RunContentDescriptor doExecute(@NotNull RunProfileState state,
+  //                                         @NotNull final ExecutionEnvironment environment) throws ExecutionException {
+  //
+  //  final HaxeTestsConfiguration profile = (HaxeTestsConfiguration)environment.getRunProfile();
+  //  final Module module = profile.getConfigurationModule().getModule();
+  //
+  //  ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
+  //  VirtualFile[] roots = rootManager.getContentRoots();
+  //
+  //  return super.doExecute(project, new CommandLineState(environment) {
+  //    @NotNull
+  //    @Override
+  //    protected ProcessHandler startProcess() throws ExecutionException {
+  //      //actually only neko target is supported for tests
+  //      HaxeTarget currentTarget = HaxeTarget.NEKO;
+  //      final GeneralCommandLine commandLine = new GeneralCommandLine();
+  //      commandLine.setWorkDirectory(PathUtil.getParentPath(module.getModuleFilePath()));
+  //      commandLine.setExePath(currentTarget.getFlag());
+  //      final HaxeModuleSettings settings = HaxeModuleSettings.getInstance(module);
+  //      String folder = settings.getOutputFolder() != null ? (settings.getOutputFolder() + "/release/") : "";
+  //      commandLine.addParameter(getFileNameWithCurrentExtension(currentTarget, folder + settings.getOutputFileName()));
+  //
+  //      final TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(module.getProject());
+  //      consoleBuilder.addFilter(new ErrorFilter(module));
+  //      setConsoleBuilder(consoleBuilder);
+  //
+  //      return new OSProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString());
+  //    }
+  //
+  //    private String getFileNameWithCurrentExtension(HaxeTarget haxeTarget, String fileName) {
+  //      if (haxeTarget != null) {
+  //        return haxeTarget.getTargetFileNameWithExtension(FileUtil.getNameWithoutExtension(fileName));
+  //      }
+  //      return fileName;
+  //    }
+  //  }, descriptor, environment);
+  //}
 }

@@ -520,7 +520,7 @@ public class HaxeDebugRunner extends DefaultProgramRunner {
     private void readLoop() throws IOException {
       java.net.ServerSocket serverSocket;
       synchronized (this) {
-         serverSocket = mServerSocket;
+        serverSocket = mServerSocket;
       }
       // Don't synchronize around the accept.  It locks up the rest of the debugger still
       // running on the AWT thread if the application isn't starting correctly.
@@ -933,7 +933,7 @@ public class HaxeDebugRunner extends DefaultProgramRunner {
 
         component.append(mClassAndFunctionName + "  [" + mFileName +
                          ":" + mLineNumber + "]", attr);
-        component.setIcon(AllIcons.Debugger.StackFrame);
+        component.setIcon(AllIcons.Debugger.Frame);
       }
 
       private void computeChildrenCurrentFrame
@@ -1355,22 +1355,22 @@ public class HaxeDebugRunner extends DefaultProgramRunner {
   }
 
   private static void showInfoMessage(final Project project, final String message, final String title) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (false /* TODO: Get display behavior from the plugin configuration. */) {
-              // Put up a modal dialog.  Folks don't like this much, so this should not be the default.
-              Messages.showInfoMessage(project, message, title);
-            } else {
-              // Show the error on the status bar.
-              StatusBarUtil.setStatusBarInfo(project, message);
-              // XXX: Should we log this, too??
-            }
-            // Add the output to the "Problems" pane.
-            ProblemsView.SERVICE.getInstance(project).addMessage(MessageCategory.INFORMATION, new String[]{message},
-                                                                 null, null, null,
-                                                                 null, UUID.randomUUID());
-          }
-      });
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        if (false /* TODO: Get display behavior from the plugin configuration. */) {
+          // Put up a modal dialog.  Folks don't like this much, so this should not be the default.
+          Messages.showInfoMessage(project, message, title);
+        } else {
+          // Show the error on the status bar.
+          StatusBarUtil.setStatusBarInfo(project, message);
+          // XXX: Should we log this, too??
+        }
+        // Add the output to the "Problems" pane.
+        ProblemsView.SERVICE.getInstance(project).addMessage(MessageCategory.INFORMATION, new String[]{message},
+                                                             null, null, null,
+                                                             null, UUID.randomUUID());
+      }
+    });
   }
 }

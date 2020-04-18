@@ -18,7 +18,6 @@
  */
 package com.intellij.plugins.haxe.haxelib;
 
-import com.intellij.compiler.ant.BuildProperties;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -241,8 +240,8 @@ public class HaxelibProjectUpdater {
     syncLibraryLists(moduleSdk,
                      HaxelibUtil.getModuleLibraries(module),
                      externalLibs,
-        /*modifies*/ toAdd,
-        /*modifies*/ toRemove);
+      /*modifies*/ toAdd,
+      /*modifies*/ toRemove);
 
     updateModule(tracker, module, toRemove, toAdd);
   }
@@ -465,8 +464,8 @@ public class HaxelibProjectUpdater {
 
         // Figure out the list of project libraries that we should reference, if we can.
         HaxeLibraryList projectLibraries = ModuleRootManager.getInstance(module).isSdkInherited()
-                                         ? getProjectLibraryList(tracker)
-                                         : new HaxeLibraryList(module);
+                                           ? getProjectLibraryList(tracker)
+                                           : new HaxeLibraryList(module);
         final LibraryTable projectTable = ProjectLibraryTable.getInstance(tracker.getProject());
 
         timeLog.stamp("<-- Time elapsed retrieving project libraries.");
@@ -593,21 +592,24 @@ public class HaxelibProjectUpdater {
         else {
           // XXX: EMB - Not sure of the validity of using this path if xml lib isn't specified.
 
-          File dir = BuildProperties.getProjectBaseDir(project);
-          List<String> projectClasspaths =
-            HaxelibClasspathUtils.getProjectDisplayInformation(project, dir, "openfl",
-                                                               HaxelibSdkUtils.lookupSdk(module));
+          String basePath = project.getBasePath();
+          if (basePath != null) {
+            File dir = new File(basePath);
+            List<String> projectClasspaths =
+              HaxelibClasspathUtils.getProjectDisplayInformation(project, dir, "openfl",
+                                                                 HaxelibSdkUtils.lookupSdk(module));
 
-          for (String classpath : projectClasspaths) {
-            VirtualFile file = LocalFileFinder.findFile(classpath);
-            if (file != null) {
-              HaxeLibrary lib = libManager.getLibraryByPath(file.getPath());
-              if (null != lib) {
-                haxelibExternalItems.add(lib.createReference());
-              }
-              else {
-                // TODO: Figure out how to communicate this to the user.
-                LOG.warn("Library referenced by openFL configuration is not known to haxelib " + classpath);
+            for (String classpath : projectClasspaths) {
+              VirtualFile file = LocalFileFinder.findFile(classpath);
+              if (file != null) {
+                HaxeLibrary lib = libManager.getLibraryByPath(file.getPath());
+                if (null != lib) {
+                  haxelibExternalItems.add(lib.createReference());
+                }
+                else {
+                  // TODO: Figure out how to communicate this to the user.
+                  LOG.warn("Library referenced by openFL configuration is not known to haxelib " + classpath);
+                }
               }
             }
           }
@@ -839,8 +841,8 @@ public class HaxelibProjectUpdater {
   private void syncLibraryLists(@NotNull Sdk sdk,
                                 @NotNull HaxeLibraryList currentList,
                                 @NotNull HaxeLibraryList externallyRequired,
-                   /*modifies*/ @NotNull HaxeLibraryList newLibrariesToAdd,
-                   /*modifies*/ @NotNull HaxeLibraryList oldLibrariesToRemove) {
+    /*modifies*/ @NotNull HaxeLibraryList newLibrariesToAdd,
+    /*modifies*/ @NotNull HaxeLibraryList oldLibrariesToRemove) {
 
     final HaxeLibraryList currentManagedEntries = new HaxeLibraryList(sdk);
     final HaxeLibraryList currentUnmanagedEntries = new HaxeLibraryList(sdk);
@@ -905,8 +907,8 @@ public class HaxelibProjectUpdater {
     syncLibraryLists(sdk,
                      HaxelibUtil.getProjectLibraries(tracker.getProject(),false, false),
                      new HaxeLibraryList(sdk),
-        /*modifies*/ toAdd,
-        /*modifies*/ toRemove );
+      /*modifies*/ toAdd,
+      /*modifies*/ toRemove );
 
     if (!toAdd.isEmpty() && !toRemove.isEmpty()) {
       timeLog.stamp("Add/Remove calculations finished.  Queuing write task.");
@@ -1124,7 +1126,7 @@ public class HaxelibProjectUpdater {
 
     @NotNull
     public HaxeLibraryList getNmmlList() {
-  return nmmlList != null ? nmmlList : new HaxeLibraryList(sdk);
+      return nmmlList != null ? nmmlList : new HaxeLibraryList(sdk);
     }
 
     @NotNull
@@ -1387,11 +1389,11 @@ public class HaxelibProjectUpdater {
 
     public boolean iterate(@NotNull Lambda<ProjectTracker> lambda) {
       synchronized(this) {
-         for(ProjectTracker tracker : myMap.values()) {
-           if (!lambda.process(tracker)) {
-             return false;
-           }
-         }
+        for(ProjectTracker tracker : myMap.values()) {
+          if (!lambda.process(tracker)) {
+            return false;
+          }
+        }
       }
       return true;
     }

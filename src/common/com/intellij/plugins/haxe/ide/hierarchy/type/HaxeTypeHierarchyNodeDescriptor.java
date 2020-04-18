@@ -70,7 +70,7 @@ final public class HaxeTypeHierarchyNodeDescriptor extends HaxeHierarchyNodeDesc
     if (changes && myIsBase) {
       final LayeredIcon icon = new LayeredIcon(2);
       icon.setIcon(getIcon(), 0);
-      icon.setIcon(AllIcons.Hierarchy.Base, 1, -AllIcons.Hierarchy.Base.getIconWidth() / 2, 0);
+      icon.setIcon(AllIcons.Hierarchy.Supertypes, 1, -AllIcons.Hierarchy.Supertypes.getIconWidth() / 2, 0);
       setIcon(icon);
     }
 

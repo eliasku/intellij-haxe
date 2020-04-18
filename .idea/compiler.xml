@@ -6,6 +6,10 @@
       <module name="common_test" target="1.8" />
       <module name="hxcpp-debugger-protocol_main" target="1.8" />
       <module name="hxcpp-debugger-protocol_test" target="1.8" />
+      <module name="intellij-haxe-2020" target="1.8" />
+      <module name="intellij-haxe-2020-common" target="1.8" />
+      <module name="intellij-haxe-2020-hxcpp-debugger-protocol" target="1.8" />
+      <module name="intellij-haxe-2020-jps-plugin" target="1.8" />
       <module name="intellij-haxe_main" target="1.8" />
       <module name="intellij-haxe_test" target="1.8" />
       <module name="jps-plugin_main" target="1.8" />
