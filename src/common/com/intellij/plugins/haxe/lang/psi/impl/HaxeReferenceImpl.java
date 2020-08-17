@@ -2,7 +2,7 @@
  * Copyright 2000-2013 JetBrains s.r.o.
  * Copyright 2014-2014 AS3Boyan
  * Copyright 2014-2014 Elias Ku
- * Copyright 2017-2019 Eric Bishton
+ * Copyright 2017-2020 Eric Bishton
  * Copyright 2017-2018 Ilya Malanin
  * Copyright 2018 Aleksandr Kuzmenko
  *
@@ -29,10 +29,10 @@ import com.intellij.plugins.haxe.ide.HaxeLookupElement;
 import com.intellij.plugins.haxe.ide.refactoring.move.HaxeFileMoveHandler;
 import com.intellij.plugins.haxe.lang.lexer.HaxeTokenTypes;
 import com.intellij.plugins.haxe.lang.psi.*;
+import com.intellij.plugins.haxe.metadata.psi.HaxeMeta;
+import com.intellij.plugins.haxe.metadata.util.HaxeMetadataUtils;
 import com.intellij.plugins.haxe.model.*;
-import com.intellij.plugins.haxe.model.type.HaxeGenericResolver;
-import com.intellij.plugins.haxe.model.type.SpecificHaxeClassReference;
-import com.intellij.plugins.haxe.model.type.SpecificTypeReference;
+import com.intellij.plugins.haxe.model.type.*;
 import com.intellij.plugins.haxe.util.*;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.JavaSourceUtil;
@@ -349,7 +349,24 @@ abstract public class HaxeReferenceImpl extends HaxeExpressionImpl implements Ha
     }
 
     if (isType(HaxeMapLiteral.class)) {
-      return HaxeClassResolveResult.create(HaxeResolveUtil.findClassByQName("Map", this));
+      // Maps are created as specific types, using these rules (from Map.hx constructor documentation):
+      //   This becomes a constructor call to one of the specialization types in
+      //   the output. The rules for that are as follows:
+      //
+      //     1. if K is a `String`, `haxe.ds.StringMap` is used
+      //     2. if K is an `Int`, `haxe.ds.IntMap` is used
+      //     3. if K is an `EnumValue`, `haxe.ds.EnumValueMap` is used
+      //     4. if K is any other class or structure, `haxe.ds.ObjectMap` is used
+      //     5. if K is any other type, it causes a compile-time error
+      //
+      // Also, maps can be created via comprehensions, so if the expression is anything other than a FAT_ARROW,
+      // we will have to get the type of the statement.
+      HaxeMapLiteral haxeMapLiteral = (HaxeMapLiteral)this;
+      HaxeExpressionEvaluatorContext context = new HaxeExpressionEvaluatorContext(this, null);
+      HaxeExpressionEvaluator.evaluate(haxeMapLiteral, context, HaxeGenericResolverUtil.generateResolverFromScopeParents(this));
+
+      SpecificHaxeClassReference mapClass = context.result.getClassType();
+      return HaxeClassResolveResult.create(HaxeResolveUtil.findClassByQName(mapClass.getClassName(), this));
     }
 
     if (isType(HaxeArrayLiteral.class)) {
@@ -474,8 +491,10 @@ abstract public class HaxeReferenceImpl extends HaxeExpressionImpl implements Ha
           }
         }
         // @:arrayAccess methods, such as in Map or openfl.Vector
-        return HaxeResolveUtil.getHaxeClassResolveResult(resolveResultHaxeClass.findArrayAccessGetter(),
-                                                         resolveResult.getSpecialization());
+        HaxeNamedComponent arrayAccessGetter = resolveResultHaxeClass.findArrayAccessGetter(resolveResult.getGenericResolver());
+        HaxeGenericResolver memberResolver = resolveResultHaxeClass.getMemberResolver(resolveResult.getGenericResolver());
+        HaxeGenericSpecialization memberSpecialization = HaxeGenericSpecialization.fromGenericResolver(arrayAccessGetter, memberResolver);
+        return HaxeResolveUtil.getHaxeClassResolveResult(arrayAccessGetter, memberSpecialization);
       }
     }
 
@@ -770,10 +789,13 @@ abstract public class HaxeReferenceImpl extends HaxeExpressionImpl implements Ha
       if (leftReference == null) {
         final boolean isElementInForwardMeta = HaxeAbstractForwardUtil.isElementInForwardMeta(this);
         if (isElementInForwardMeta) {
-          addAbstractUnderlyingClassVariants(suggestedVariants, PsiTreeUtil.getParentOfType(this, HaxeClass.class), resolver);
+          final HaxeMeta meta = HaxeMetadataUtils.getEnclosingMeta(this);
+          final PsiElement element = HaxeMetadataUtils.getAssociatedElement(meta);
+          final HaxeClass clazz = element instanceof HaxeClass ? (HaxeClass)element : null;
+          addAbstractUnderlyingClassVariants(suggestedVariants, clazz, resolver);
         } else {
           PsiTreeUtil.treeWalkUp(new ComponentNameScopeProcessor(suggestedVariants), this, null, new ResolveState());
-          addClassVariants(suggestedVariants, PsiTreeUtil.getParentOfType(this, HaxeClass.class), false);
+          addClassVariants(suggestedVariants, PsiTreeUtil.getParentOfType(this, HaxeClass.class), false, resolver);
         }
       }
     }
@@ -871,11 +893,12 @@ abstract public class HaxeReferenceImpl extends HaxeExpressionImpl implements Ha
       });
   }
 
-  private static void addClassVariants(Set<HaxeComponentName> suggestedVariants, @Nullable HaxeClass haxeClass, boolean filterByAccess) {
+  private static void addClassVariants(Set<HaxeComponentName> suggestedVariants, @Nullable HaxeClass haxeClass, boolean filterByAccess,
+                                       @Nullable HaxeGenericResolver resolver) {
     if (haxeClass == null) {
       return;
     }
-    for (HaxeNamedComponent namedComponent : HaxeResolveUtil.findNamedSubComponents(haxeClass)) {
+    for (HaxeNamedComponent namedComponent : HaxeResolveUtil.findNamedSubComponents(resolver, haxeClass)) {
       final boolean needFilter = filterByAccess && !namedComponent.isPublic();
       if (!needFilter && namedComponent.getComponentName() != null) {
         suggestedVariants.add(namedComponent.getComponentName());
@@ -890,7 +913,7 @@ abstract public class HaxeReferenceImpl extends HaxeExpressionImpl implements Ha
     final HaxeAbstractClassModel model = (HaxeAbstractClassModel)haxeClass.getModel();
     final HaxeClass underlyingClass = model.getUnderlyingClass(resolver);
     if (underlyingClass != null) {
-      addClassVariants(suggestedVariants, underlyingClass, true);
+      addClassVariants(suggestedVariants, underlyingClass, true, resolver);
     }
   }
 
@@ -939,7 +962,7 @@ abstract public class HaxeReferenceImpl extends HaxeExpressionImpl implements Ha
       }
     }
 
-    for (HaxeNamedComponent namedComponent : HaxeResolveUtil.findNamedSubComponents(haxeClass)) {
+    for (HaxeNamedComponent namedComponent : HaxeResolveUtil.findNamedSubComponents(resolver, haxeClass)) {
       final boolean needFilter = filterByAccess && !namedComponent.isPublic();
       if (isAbstractEnum && HaxeAbstractEnumUtil.couldBeAbstractEnumField(namedComponent)) {
         continue;
